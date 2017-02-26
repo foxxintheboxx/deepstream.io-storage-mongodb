@@ -128,6 +128,18 @@ Connector.prototype.get = function( key, callback ) {
   })
 }
 
+Connector.prototype.find = function( collectionName, query, callback ) {
+  const collection = this._getCollection( collectionName )
+  collection.find( query ).toArray( ( err, docs ) => {
+    const results = _.map( docs, ( doc ) => {
+      delete doc._id
+      doc =  dataTransform.transformValueFromStorage( doc )
+      return doc
+    })
+    callback( null, results )
+  })
+}
+
 /**
  * Deletes an entry from the cache.
  *
@@ -199,12 +211,16 @@ Connector.prototype._getParams = function( key ) {
     id = key.substring(index + 1)
   }
 
+  return { collection: this._getCollection( collectionName ), id: id }
+}
+
+Connector.prototype._getCollection = function( collectionName ) {
   if( !this._collections[ collectionName ] ) {
     this._collections[ collectionName ] = this._db.collection( collectionName )
     this._collections[ collectionName ].ensureIndex({ ds_key: 1 })
   }
 
-  return { collection: this._collections[ collectionName ], id: id }
+  return return this._collections[ collectionName ];
 }
 
 module.exports = Connector
